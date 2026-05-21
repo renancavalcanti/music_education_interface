@@ -3,7 +3,7 @@
  * Copyright (C) 2025 Alberto Acquilino
  *
  * Licensed under the GNU Affero General Public License v3.0.
- * See the LICENSE file for more details.
+ * See the LICENSE file for more details. 
  */
 
 import { enableProdMode, importProvidersFrom } from '@angular/core';
