@@ -99,6 +99,7 @@
   },
   "description": "An Ionic project",
   "browser": {
+    "crypto": false,
     "fs": false,
     "os": false,
     "path": false

@@ -51,12 +51,12 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   private readonly boundRefreshSettings = () => this.handleSettingsUpdated();
   private beatSubscription?: Subscription;
 
+  exerciseMode: 'instrument' | 'tuner' = 'instrument';
   selectedInstrument = 'trumpet';
   private readonly instrumentDisplayNames: Record<string, string> = {
     trumpet: 'Trumpet',
     clarinet: 'Clarinet',
     oboe: 'Oboe',
-    tuner: 'Tuner',
   };
   language: string = 'en'; // Default language
   /**
@@ -120,7 +120,7 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   /**
    * The score.
    */
-  score: Score = scoreFromNote(this.NOTES[this.currentNote][0], this.selectedInstrument);
+  score: Score = scoreFromNote(this.NOTES[this.currentNote][0], 'trumpet');
 
   /**
    * The audio nodes.
@@ -242,25 +242,12 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
    * @returns void
    */
   private loadStateFromLocalStorage() {
-    const savedMode = localStorage.getItem('mode');
-    const savedInstrument = localStorage.getItem('selectedInstrument');
+    const { mode, instrument } = this.parseStoredModeAndInstrument();
     const savedLanguage = localStorage.getItem('language');
 
-    // Load the selected instrument and its settings
-    if (savedInstrument) {
-      this.selectedInstrument = savedInstrument;
-    }
-
-    // Legacy: exercise tuner was stored in `mode`, not as an instrument.
-    if (savedMode === 'tuner' && this.selectedInstrument !== 'tuner') {
-      this.selectedInstrument = 'tuner';
-    }
-
-    this.NOTES = this.getNotesForInstrument(this.selectedInstrument);
-    this.soundsService.setInstrument(this.selectedInstrument);
-
-    // Load settings based on the selected instrument
-    this.loadInstrumentSettings(this.selectedInstrument);
+    this.exerciseMode = mode;
+    this.selectedInstrument = instrument;
+    this.applyExerciseConfiguration();
 
     // Load common settings
     this.useFlatsAndSharps = this.retrieveAndParseFromLocalStorage('useFlatsAndSharps', false);
@@ -269,6 +256,32 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
     // dark mode state load & apply
     this.isDarkMode = this.retrieveAndParseFromLocalStorage('isDarkMode', false);
     this.applyDarkMode(this.isDarkMode);
+  }
+
+  private parseStoredModeAndInstrument(): { mode: 'instrument' | 'tuner'; instrument: string } {
+    const savedMode = localStorage.getItem('mode');
+    const savedInstrument = localStorage.getItem('selectedInstrument');
+    const instruments = ['trumpet', 'clarinet', 'oboe'] as const;
+
+    let mode: 'instrument' | 'tuner' = 'instrument';
+    let instrument = 'trumpet';
+
+    if (savedInstrument && savedInstrument !== 'tuner' && instruments.includes(savedInstrument as typeof instruments[number])) {
+      instrument = savedInstrument;
+    }
+
+    if (savedMode === 'tuner') {
+      mode = 'tuner';
+    } else if (savedMode === 'instrument') {
+      mode = 'instrument';
+    } else if (savedInstrument === 'tuner') {
+      mode = 'tuner';
+    } else if (savedMode && instruments.includes(savedMode as typeof instruments[number])) {
+      mode = 'instrument';
+      instrument = savedMode;
+    }
+
+    return { mode, instrument };
   }
 
   private handleSettingsUpdated() {
@@ -305,10 +318,10 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
    * @param instrument - The instrument to load settings for.
    * @returns void
    */
-  private loadInstrumentSettings(instrument: string) {
-    // Load low and high notes specific to the instrument
-    this.lowNote = this.retrieveAndParseFromLocalStorage(`${instrument}_lowNote`, INITIAL_NOTE);
-    this.highNote = this.retrieveAndParseFromLocalStorage(`${instrument}_highNote`, INITIAL_NOTE);
+  private loadInstrumentSettings() {
+    const key = this.exerciseNoteKey;
+    this.lowNote = this.retrieveAndParseFromLocalStorage(`${key}_lowNote`, INITIAL_NOTE);
+    this.highNote = this.retrieveAndParseFromLocalStorage(`${key}_highNote`, INITIAL_NOTE);
     // Tempo is common for both instruments
     const tempoSaved = this.retrieveAndParseFromLocalStorage('tempo', MINTEMPO);
     if (tempoSaved !== MINTEMPO) {
@@ -350,13 +363,7 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   selectInstrument(event: any) {
     this.selectedInstrument = event.detail.value;
     console.log('Selected Instrument:', this.selectedInstrument);
-    this.NOTES = this.getNotesForInstrument(this.selectedInstrument);
-    this.soundsService.setInstrument(this.selectedInstrument);
-
-    // Load settings for the newly selected instrument
-    this.loadInstrumentSettings(this.selectedInstrument);
-
-    // Save the current state to local storage
+    this.applyExerciseConfiguration();
     this.saveCurrentStateToLocalStorage();
   }
 
@@ -368,10 +375,10 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
     localStorage.setItem('selectedInstrument', this.selectedInstrument);
     localStorage.setItem('useFlatsAndSharps', JSON.stringify(this.useFlatsAndSharps));
     localStorage.setItem('useDynamics', JSON.stringify(this.useDynamics));
-    localStorage.setItem(`${this.selectedInstrument}_lowNote`, this.lowNote.toString());
-    localStorage.setItem(`${this.selectedInstrument}_highNote`, this.highNote.toString());
+    localStorage.setItem(`${this.exerciseNoteKey}_lowNote`, this.lowNote.toString());
+    localStorage.setItem(`${this.exerciseNoteKey}_highNote`, this.highNote.toString());
     localStorage.setItem('tempo', this._tempo.tempo$.value.toString());
-    localStorage.setItem('mode', this.selectedInstrument);
+    localStorage.setItem('mode', this.exerciseMode);
     localStorage.setItem('refFrequencyValue', this.refFrequencyValue$.toString());
   }
 
@@ -445,7 +452,7 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
     this.useDynamics = event.detail.checked;
     localStorage.setItem('useDynamics', JSON.stringify(this.useDynamics));
     if (!this.useDynamics) {
-      this.score = scoreFromNote(this.NOTES[this.currentNote][0], this.selectedInstrument);
+      this.score = scoreFromNote(this.NOTES[this.currentNote][0], this.exerciseNoteKey);
       this.soundsService.setVolume(1.0);
     }
   }
@@ -492,8 +499,8 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
    * @returns void
    */
   saveNotes() {
-    localStorage.setItem(`${this.selectedInstrument}_lowNote`, this.lowNote.toString());
-    localStorage.setItem(`${this.selectedInstrument}_highNote`, this.highNote.toString());
+    localStorage.setItem(`${this.exerciseNoteKey}_lowNote`, this.lowNote.toString());
+    localStorage.setItem(`${this.exerciseNoteKey}_highNote`, this.highNote.toString());
   }
 
   /**
@@ -531,9 +538,9 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
     if (this.useDynamics) {
       const dynamic = DYNAMICS[Math.floor(Math.random() * DYNAMICS.length)];
       this.soundsService.setVolume(dynamic.volume);
-      this.score = scoreFromNote(scoreImage,this.selectedInstrument, dynamic.label);
+      this.score = scoreFromNote(scoreImage, this.exerciseNoteKey, dynamic.label);
     } else {
-      this.score = scoreFromNote(scoreImage, this.selectedInstrument);
+      this.score = scoreFromNote(scoreImage, this.exerciseNoteKey);
     }
   }
 
@@ -797,13 +804,36 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
 
   /** Display name for the selected instrument (idle screen label). */
   get selectedInstrumentDisplayName(): string {
+    if (this.isTunerExercise()) {
+      return 'Tuner';
+    }
+
     return this.instrumentDisplayNames[this.selectedInstrument]
       ?? this.selectedInstrument.charAt(0).toUpperCase() + this.selectedInstrument.slice(1);
   }
 
-  /** Exercise uses the chromatic tuner instrument (not trumpet/clarinet/oboe diagrams). */
+  /**
+   * Storage/score/note-selector key for the active exercise (tuner uses its own note range).
+   */
+  get exerciseNoteKey(): string {
+    return this.isTunerExercise() ? 'tuner' : this.selectedInstrument;
+  }
+
+  private applyExerciseConfiguration(): void {
+    this.NOTES = this.getNotesForInstrument(this.exerciseNoteKey);
+    this.soundsService.setInstrument(this.isTunerExercise() ? 'tuner' : this.selectedInstrument);
+    this.loadInstrumentSettings();
+
+    if (!this._tempo.playing$.value) {
+      this.updateScore(this.currentNote);
+    }
+
+    this.cdr.detectChanges();
+  }
+
+  /** Tuner mode: practice with pitch feedback, no fingering diagram. */
   isTunerExercise(): boolean {
-    return this.selectedInstrument === 'tuner';
+    return this.exerciseMode === 'tuner';
   }
 
   /**

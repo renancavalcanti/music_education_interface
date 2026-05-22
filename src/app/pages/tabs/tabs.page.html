@@ -32,6 +32,33 @@
   </ion-header>
   <ion-content class="ion-padding">
     <div class="menu-sections">
+      <!-- Mode Section -->
+      <div class="menu-section">
+        <h3 class="section-title">
+          <ion-icon name="options-outline" aria-hidden="true"></ion-icon>
+          Mode
+        </h3>
+        <div class="section-card">
+          <ion-list lines="none">
+            <ion-item class="mode-item segment-item" [disabled]="isDisabled()">
+              <ion-segment
+                class="mode-switcher"
+                (ionChange)="switchMode($event)"
+                mode="ios"
+                [value]="exerciseMode"
+              >
+                <ion-segment-button value="instrument">
+                  <ion-label>Instrument</ion-label>
+                </ion-segment-button>
+                <ion-segment-button value="tuner">
+                  <ion-label>Tuner</ion-label>
+                </ion-segment-button>
+              </ion-segment>
+            </ion-item>
+          </ion-list>
+        </div>
+      </div>
+
       <!-- Instrument Section -->
       <div class="menu-section">
         <h3 class="section-title">
@@ -40,7 +67,7 @@
         </h3>
         <div class="section-card">
           <ion-list lines="none">
-            <ion-item [disabled]="isDisabled()">
+            <ion-item [disabled]="isDisabled() || isInstrumentSelectDisabled()">
               <ion-icon name="musical-notes" slot="start" class="item-icon" aria-hidden="true"></ion-icon>
               <ion-label>Select Instrument</ion-label>
               <ion-select
@@ -53,23 +80,20 @@
                 <ion-select-option value="trumpet">Trumpet</ion-select-option>
                 <ion-select-option value="clarinet">Clarinet</ion-select-option>
                 <ion-select-option value="oboe">Oboe</ion-select-option>
-                <ion-select-option value="tuner">Tuner</ion-select-option>
               </ion-select>
             </ion-item>
 
-            <ng-container *ngIf="selectedInstrument">
-              <ion-item button (click)="openPicker('frequency')" [disabled]="isDisabled()">
+            <ion-item button (click)="openPicker('frequency')" [disabled]="isDisabled()">
                 <ion-icon name="pulse-outline" slot="start" class="item-icon" aria-hidden="true"></ion-icon>
                 <ion-label>Reference A4</ion-label>
                 <ion-note slot="end">{{ refFrequencyValue$ }} Hz</ion-note>
               </ion-item>
-            </ng-container>
           </ion-list>
         </div>
       </div>
 
       <!-- Music Section -->
-      <div class="menu-section" *ngIf="selectedInstrument">
+      <div class="menu-section">
         <h3 class="section-title">
           <ion-icon name="musical-notes" aria-hidden="true"></ion-icon>
           Music
@@ -156,26 +180,13 @@
 
       <nav class="app-nav-tabs" aria-label="Sections">
         <button
-          class="app-nav-tab"
+          class="app-nav-tab active"
           type="button"
-          [class.active]="activeTab === 'exercise'"
           [disabled]="isDisabled()"
-          [attr.aria-current]="activeTab === 'exercise' ? 'page' : null"
-          (click)="goToExercise()"
+          aria-current="page"
         >
           <ion-icon name="musical-notes" aria-hidden="true"></ion-icon>
           <span>Exercise</span>
-        </button>
-        <button
-          class="app-nav-tab"
-          type="button"
-          [class.active]="activeTab === 'tuner'"
-          [disabled]="isDisabled()"
-          [attr.aria-current]="activeTab === 'tuner' ? 'page' : null"
-          (click)="goToTuner()"
-        >
-          <ion-icon name="radio" aria-hidden="true"></ion-icon>
-          <span>Tuner</span>
         </button>
       </nav>
 
@@ -223,20 +234,11 @@
       <ion-tab-button
         tab="exercise"
         href="/home/exercise"
-        [selected]="activeTab === 'exercise'"
+        [selected]="true"
         [disabled]="isDisabled()"
       >
         <ion-icon name="musical-notes"></ion-icon>
         <ion-label>Exercise</ion-label>
-      </ion-tab-button>
-      <ion-tab-button
-        tab="tuner"
-        href="/home/tuner"
-        [selected]="activeTab === 'tuner'"
-        [disabled]="isDisabled()"
-      >
-        <ion-icon name="radio"></ion-icon>
-        <ion-label>Tuner</ion-label>
       </ion-tab-button>
     </ion-tab-bar>
   </ion-tabs>

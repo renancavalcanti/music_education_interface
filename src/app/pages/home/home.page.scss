@@ -600,7 +600,7 @@ ion-segment-button {
   .wrapper.is-playing .exercise-shell {
     display: grid;
     grid-template-columns: minmax(76px, 96px) minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr) minmax(148px, 0.95fr);
+    grid-template-rows: minmax(0, 1fr) minmax(220px, 1.2fr);
     grid-template-areas:
       'rail instrument'
       'notation notation';
@@ -639,6 +639,50 @@ ion-segment-button {
     padding: 8px 10px 10px;
     border-inline-start: none;
     padding-inline-start: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 6px;
+    overflow: hidden;
+  }
+
+  .wrapper.is-playing .stage-notation .pitch-feedback {
+    flex: 0 0 auto;
+    min-height: 44px;
+    max-width: none;
+    padding: 6px 10px;
+    gap: 4px;
+  }
+
+  .wrapper.is-playing .stage-notation .pitch-feedback-label {
+    font-size: 0.72rem;
+    line-height: 1.1;
+  }
+
+  .wrapper.is-playing .stage-notation .pitch-bar {
+    height: 10px;
+  }
+
+  .wrapper.is-playing .stage-notation .pitch-marker {
+    width: 14px;
+    height: 14px;
+    top: -2px;
+  }
+
+  .wrapper.is-playing .stage-notation .score {
+    flex: 1 1 auto;
+    min-height: 136px;
+    height: auto;
+    align-items: stretch;
+    justify-content: flex-start;
+  }
+
+  .wrapper.is-playing .stage-notation .score score-view {
+    flex: 1 1 auto;
+    min-height: 136px;
+    height: 100%;
+    width: 100%;
   }
 
   .wrapper.is-playing .exercise-rail--status .metronome.status-panel,
@@ -691,18 +735,6 @@ ion-segment-button {
     }
   }
 
-  .wrapper.is-playing .stage-notation .score {
-    width: 100%;
-    min-height: 120px;
-    height: 100%;
-  }
-
-  .wrapper.is-playing .stage-notation .score score-view {
-    display: block;
-    width: 100%;
-    height: 100%;
-    min-height: 120px;
-  }
 }
 
 /* Tablet portrait: center metronome content like desktop */

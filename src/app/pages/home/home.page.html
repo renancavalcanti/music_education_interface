@@ -15,21 +15,23 @@
         <ng-container *ngIf="!isPlaying()">
           <div class="idle-instrument-panel surface-panel">
             <div class="idle-instrument-display"
-              [class.is-vertical-instrument]="selectedInstrument === 'clarinet' || selectedInstrument === 'oboe'">
-              <ng-container *ngIf="selectedInstrument === 'trumpet'">
-                <trumpet-diagram [trumpetButtons]="trumpetBtns"></trumpet-diagram>
-              </ng-container>
-              <ng-container *ngIf="selectedInstrument === 'clarinet'">
-                <img [src]="clarinetPosition" alt="Clarinet Position" />
-              </ng-container>
-              <ng-container *ngIf="selectedInstrument === 'oboe'">
-                <img [src]="oboePosition" alt="Oboe Position" />
-              </ng-container>
-              <ng-container *ngIf="selectedInstrument === 'tuner'">
+              [class.is-vertical-instrument]="!isTunerExercise() && (selectedInstrument === 'clarinet' || selectedInstrument === 'oboe')">
+              <ng-container *ngIf="isTunerExercise(); else idleInstrumentDiagram">
                 <chromatic-tuner [refFrequencyValue$]="refFrequencyValue$"></chromatic-tuner>
               </ng-container>
+              <ng-template #idleInstrumentDiagram>
+                <ng-container *ngIf="selectedInstrument === 'trumpet'">
+                  <trumpet-diagram [trumpetButtons]="trumpetBtns"></trumpet-diagram>
+                </ng-container>
+                <ng-container *ngIf="selectedInstrument === 'clarinet'">
+                  <img [src]="clarinetPosition" alt="Clarinet Position" />
+                </ng-container>
+                <ng-container *ngIf="selectedInstrument === 'oboe'">
+                  <img [src]="oboePosition" alt="Oboe Position" />
+                </ng-container>
+              </ng-template>
             </div>
-            <div class="idle-instrument-label" *ngIf="selectedInstrument">
+            <div class="idle-instrument-label" *ngIf="isTunerExercise() || selectedInstrument">
               <span>{{ selectedInstrumentDisplayName }}</span>
             </div>
           </div>
@@ -50,32 +52,34 @@
 
           <div class="stage-practice-group surface-panel" aria-label="Practice">
             <div class="stage-instrument surface-panel"
-              [class.is-vertical-instrument]="selectedInstrument === 'clarinet' || selectedInstrument === 'oboe'"
+              [class.is-vertical-instrument]="!isTunerExercise() && (selectedInstrument === 'clarinet' || selectedInstrument === 'oboe')"
               aria-label="Instrument">
-              <ng-container *ngIf="selectedInstrument === 'trumpet'">
-                <div class="trumpet visual-panel">
-                  <trumpet-diagram [trumpetButtons]="trumpetBtns"></trumpet-diagram>
-                </div>
-              </ng-container>
-              <ng-container *ngIf="selectedInstrument === 'clarinet'">
-                <div class="clarinet visual-panel">
-                  <img [src]="clarinetPosition" alt="Clarinet Position" />
-                </div>
-              </ng-container>
-              <ng-container *ngIf="selectedInstrument === 'oboe'">
-                <div class="oboe visual-panel">
-                  <img [src]="oboePosition" alt="Oboe Position" />
-                </div>
-              </ng-container>
-              <ng-container *ngIf="selectedInstrument === 'tuner'">
+              <ng-container *ngIf="isTunerExercise(); else playingInstrumentDiagram">
                 <div class="chromatic-tuner visual-panel">
                   <chromatic-tuner [refFrequencyValue$]="refFrequencyValue$"></chromatic-tuner>
                 </div>
               </ng-container>
+              <ng-template #playingInstrumentDiagram>
+                <ng-container *ngIf="selectedInstrument === 'trumpet'">
+                  <div class="trumpet visual-panel">
+                    <trumpet-diagram [trumpetButtons]="trumpetBtns"></trumpet-diagram>
+                  </div>
+                </ng-container>
+                <ng-container *ngIf="selectedInstrument === 'clarinet'">
+                  <div class="clarinet visual-panel">
+                    <img [src]="clarinetPosition" alt="Clarinet Position" />
+                  </div>
+                </ng-container>
+                <ng-container *ngIf="selectedInstrument === 'oboe'">
+                  <div class="oboe visual-panel">
+                    <img [src]="oboePosition" alt="Oboe Position" />
+                  </div>
+                </ng-container>
+              </ng-template>
             </div>
 
             <section class="stage-notation surface-panel" aria-label="Score">
-              <div class="pitch-feedback" *ngIf="selectedInstrument !== 'tuner' && isPlaying()" [ngClass]="pitchAccuracyClass">
+              <div class="pitch-feedback" *ngIf="!isTunerExercise() && isPlaying()" [ngClass]="pitchAccuracyClass">
                 <div class="pitch-feedback-label">{{ pitchFeedbackLabel }}</div>
                 <div class="pitch-bar" aria-hidden="true">
                   <div class="pitch-marker" [style.left.%]="pitchBarPosition"></div>
@@ -102,7 +106,7 @@
               <note-selector
                 label="Lowest Note:"
                 [note]="lowNote"
-                [selectedInstrument]="selectedInstrument"
+                [selectedInstrument]="exerciseNoteKey"
                 [useFlatsAndSharps]="useFlatsAndSharps"
                 (change)="changeLowNote($event)"
               ></note-selector>
@@ -112,7 +116,7 @@
               <note-selector
                 label="Highest Note:"
                 [note]="highNote"
-                [selectedInstrument]="selectedInstrument"
+                [selectedInstrument]="exerciseNoteKey"
                 [useFlatsAndSharps]="useFlatsAndSharps"
                 (change)="changeHighNote($event)"
               ></note-selector>

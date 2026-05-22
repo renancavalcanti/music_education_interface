@@ -530,7 +530,7 @@ app-pitchlite .tuner-card {
   screen and (max-width: 1024px) and (orientation: portrait) {
   #main-content .wrapper.is-playing .exercise-shell {
     grid-template-columns: minmax(76px, 96px) minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr) minmax(148px, 0.95fr);
+    grid-template-rows: minmax(0, 1fr) minmax(220px, 1.2fr);
     grid-template-areas:
       'rail instrument'
       'notation notation';
@@ -548,6 +548,15 @@ app-pitchlite .tuner-card {
   #main-content .wrapper.is-playing .stage-notation {
     grid-area: notation;
     width: 100%;
+    justify-content: flex-start;
+  }
+
+  #main-content .wrapper.is-playing .stage-notation .score {
+    min-height: 136px;
+  }
+
+  #main-content .wrapper.is-playing .stage-notation .score score-view {
+    min-height: 136px;
   }
 
   #main-content .wrapper.is-playing .exercise-rail--status {
