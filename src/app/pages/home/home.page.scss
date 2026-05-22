@@ -227,8 +227,8 @@ ion-modal {
   min-height: 0;
   height: 100%;
   width: 100%;
-  justify-content: flex-start;
-  align-items: stretch;
+  justify-content: center;
+  align-items: center;
   box-sizing: border-box;
 }
 
@@ -252,11 +252,18 @@ ion-modal {
   justify-content: space-evenly;
 }
 
-.stage-practice {
+.stage-practice-group {
+  min-height: 0;
+  min-width: 0;
+}
+
+.stage-instrument.surface-panel,
+.stage-notation.surface-panel {
   min-height: 0;
   min-width: 0;
   padding: var(--app-pad);
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .stage-instrument {
@@ -355,27 +362,11 @@ ion-modal {
   justify-content: center;
   gap: clamp(0.4rem, 1.2vh, 0.85rem);
   border-radius: var(--app-radius-sm, 10px);
-  color: black;
+  color: var(--ion-text-color, #111111);
   width: 100%;
   min-height: 100%;
   text-align: center;
-  background: radial-gradient(circle at 30% 20%, #0d9e00, #fff500 50%, #ff1818);
-  background-size: 200% 200%;
-  animation: gradient 2s ease infinite;
-}
-
-@keyframes gradient {
-  0% {
-    background-position: 0% 50%;
-  }
-
-  50% {
-    background-position: 100% 50%;
-  }
-
-  100% {
-    background-position: 0% 50%;
-  }
+  background: var(--app-surface, #ffffff);
 }
 
 .metronome-bullet h1 {
@@ -603,52 +594,154 @@ ion-segment-button {
   border-radius:6px;
 }
 
-/* Mobile playing: rail + practice column (instrument over score) */
-@media screen and (max-width: 767px) {
+/* Compact playing: phone + tablet portrait (counter | instrument, score full width) */
+@media screen and (max-width: 767px),
+  screen and (max-width: 1024px) and (orientation: portrait) {
   .wrapper.is-playing .exercise-shell {
     display: grid;
-    grid-template-columns: minmax(112px, 132px) minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr);
-    grid-template-areas: 'rail practice';
+    grid-template-columns: minmax(76px, 96px) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(148px, 0.95fr);
+    grid-template-areas:
+      'rail instrument'
+      'notation notation';
     align-content: stretch;
     height: 100%;
     min-height: 0;
+    gap: var(--app-gap);
+  }
+
+  .wrapper.is-playing .stage-practice-group {
+    display: contents;
   }
 
   .wrapper.is-playing .exercise-rail--status {
     grid-area: rail;
-    padding: 8px;
-  }
-
-  .wrapper.is-playing .stage-practice {
-    grid-area: practice;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    align-self: stretch;
+    padding: 6px;
+    height: auto;
     min-height: 0;
-    padding: 8px;
   }
 
   .wrapper.is-playing .stage-instrument {
-    flex: 1.2 1 auto;
+    grid-area: instrument;
+    flex: none;
     min-height: 0;
-    --playing-instrument-max-height: min(100%, 44vh, 500px);
+    height: 100%;
+    padding: 8px;
+    --playing-instrument-max-height: min(100%, 38vh, 420px);
   }
 
   .wrapper.is-playing .stage-notation {
-    flex: 1 1 auto;
+    grid-area: notation;
+    flex: none;
+    width: 100%;
     min-height: 0;
+    padding: 8px 10px 10px;
     border-inline-start: none;
-    padding-inline-start: 0;
+    padding-inline-start: 10px;
+  }
+
+  .wrapper.is-playing .exercise-rail--status .metronome.status-panel,
+  .wrapper.is-playing .exercise-rail--status .metronome-bullet {
+    height: 100%;
+    min-height: 0;
   }
 
   .wrapper.is-playing .exercise-rail--status .metronome-bullet {
-    min-height: 100%;
+    padding: 0.45rem 0.35rem;
+    gap: 0.35rem;
+    justify-content: flex-start;
+  }
+
+  .wrapper.is-playing .exercise-rail--status .metronome-bullet h1 {
+    font-size: clamp(1.65rem, 8vw, 2.25rem);
+    line-height: 1;
+  }
+
+  .wrapper.is-playing .exercise-rail--status semaphore-light {
+    flex: 1 1 auto;
+    min-height: 0;
+    align-items: stretch;
+  }
+
+  .wrapper.is-playing .exercise-rail--status semaphore-light ::ng-deep .semaphore-lights {
+    gap: 0.25rem;
+    justify-content: space-between;
+  }
+
+  .wrapper.is-playing .exercise-rail--status semaphore-light ::ng-deep .light-container {
+    .light-wrapper {
+      width: clamp(22px, 6vw, 28px);
+      height: clamp(22px, 6vw, 28px);
+    }
+
+    .light {
+      width: clamp(18px, 5vw, 24px);
+      height: clamp(18px, 5vw, 24px);
+    }
+
+    .light-label {
+      font-size: clamp(0.62rem, 2.8vw, 0.75rem);
+      margin-left: 4px;
+    }
+
+    &.active .light {
+      width: clamp(22px, 6vw, 28px);
+      height: clamp(22px, 6vw, 28px);
+    }
+  }
+
+  .wrapper.is-playing .stage-notation .score {
+    width: 100%;
+    min-height: 120px;
+    height: 100%;
+  }
+
+  .wrapper.is-playing .stage-notation .score score-view {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 120px;
   }
 }
 
-/* Tablet + desktop playing: practice panel left (instrument | score), rail right */
-@media screen and (min-width: 768px) {
+/* Tablet portrait: center metronome content like desktop */
+@media screen and (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  .wrapper.is-playing .exercise-shell {
+    grid-template-columns: minmax(100px, 140px) minmax(0, 1fr);
+  }
+
+  .wrapper.is-playing .exercise-rail--status {
+    padding: var(--app-pad);
+  }
+
+  .wrapper.is-playing .exercise-rail--status .metronome-bullet {
+    justify-content: center;
+    align-items: center;
+    gap: clamp(0.5rem, 1.2vh, 0.85rem);
+    padding: clamp(0.65rem, 1.5vw, 1rem);
+  }
+
+  .wrapper.is-playing .exercise-rail--status .metronome-bullet h1 {
+    font-size: clamp(2rem, 5vw, 3rem);
+  }
+
+  .wrapper.is-playing .exercise-rail--status semaphore-light {
+    flex: 0 1 auto;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .wrapper.is-playing .exercise-rail--status semaphore-light ::ng-deep .semaphore-lights {
+    flex: 0 1 auto;
+    justify-content: center;
+    gap: clamp(0.35rem, 1vh, 0.65rem);
+  }
+}
+
+/* Wide playing: tablet landscape + desktop (instrument | score, rail right) */
+@media screen and (min-width: 1025px),
+  screen and (min-width: 768px) and (orientation: landscape) {
   .wrapper.is-playing .exercise-shell {
     display: grid;
     align-items: stretch;
@@ -659,13 +752,35 @@ ion-segment-button {
     grid-template-areas: 'practice rail';
   }
 
-  .wrapper.is-playing .stage-practice {
+  .wrapper.is-playing .stage-practice-group {
     grid-area: practice;
     display: grid;
     grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
     grid-template-rows: minmax(0, 1fr);
     gap: clamp(10px, 1.5vw, 18px);
     align-items: stretch;
+    min-height: 0;
+    min-width: 0;
+  }
+
+  .wrapper.is-playing .stage-instrument,
+  .wrapper.is-playing .stage-notation {
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    padding: 0;
+  }
+
+  .wrapper.is-playing .stage-practice-group.surface-panel {
+    padding: var(--app-pad);
+    overflow: hidden;
+  }
+
+  .wrapper.is-playing .stage-instrument.surface-panel,
+  .wrapper.is-playing .stage-notation.surface-panel {
+    background: transparent;
+    border: none;
+    box-shadow: none;
   }
 
   .wrapper.is-playing .stage-instrument {
@@ -690,7 +805,7 @@ ion-segment-button {
     grid-template-columns: minmax(0, 1fr) minmax(220px, 260px);
   }
 
-  .wrapper.is-playing .stage-practice {
+  .wrapper.is-playing .stage-practice-group {
     grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
   }
 
@@ -718,9 +833,12 @@ ion-segment-button {
     padding: 6px;
   }
 
-  .wrapper.is-playing .stage-instrument,
-  .wrapper.is-playing .stage-notation {
+  .wrapper.is-playing .stage-instrument {
     padding: 6px;
+  }
+
+  .wrapper.is-playing .stage-notation {
+    padding: 6px 8px 8px;
   }
 
   .trumpet,

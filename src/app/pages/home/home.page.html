@@ -48,8 +48,8 @@
             </div>
           </aside>
 
-          <section class="stage-practice surface-panel" aria-label="Practice">
-            <div class="stage-instrument"
+          <div class="stage-practice-group surface-panel" aria-label="Practice">
+            <div class="stage-instrument surface-panel"
               [class.is-vertical-instrument]="selectedInstrument === 'clarinet' || selectedInstrument === 'oboe'"
               aria-label="Instrument">
               <ng-container *ngIf="selectedInstrument === 'trumpet'">
@@ -74,7 +74,7 @@
               </ng-container>
             </div>
 
-            <div class="stage-notation" aria-label="Score">
+            <section class="stage-notation surface-panel" aria-label="Score">
               <div class="pitch-feedback" *ngIf="selectedInstrument !== 'tuner' && isPlaying()" [ngClass]="pitchAccuracyClass">
                 <div class="pitch-feedback-label">{{ pitchFeedbackLabel }}</div>
                 <div class="pitch-bar" aria-hidden="true">
@@ -85,8 +85,8 @@
               <div class="score">
                 <score-view id="score-image" [score]="score" [language]="language"></score-view>
               </div>
-            </div>
-          </section>
+            </section>
+          </div>
         </div>
 
         <div class="bottom" *ngIf="!isPlaying()">

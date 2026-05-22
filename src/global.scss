@@ -480,7 +480,8 @@ app-pitchlite .tuner-card {
   min-height: 48px;
 }
 
-@media screen and (min-width: 768px) {
+@media screen and (min-width: 1025px),
+  screen and (min-width: 768px) and (orientation: landscape) {
   #main-content .wrapper.is-playing .score app-score {
     min-height: 0;
     height: 100%;
@@ -496,7 +497,7 @@ app-pitchlite .tuner-card {
   }
 }
 
-@media screen and (orientation: landscape) and (pointer: coarse) {
+@media screen and (orientation: landscape) and (pointer: coarse) and (min-width: 768px) {
   #main-content .wrapper.is-playing .exercise-shell {
     grid-template-columns: minmax(0, 1fr) minmax(180px, 220px);
   }
@@ -525,17 +526,41 @@ app-pitchlite .tuner-card {
   }
 }
 
-@media screen and (max-width: 767px) {
-  #main-content .wrapper.is-playing .stage-practice {
+@media screen and (max-width: 767px),
+  screen and (max-width: 1024px) and (orientation: portrait) {
+  #main-content .wrapper.is-playing .exercise-shell {
+    grid-template-columns: minmax(76px, 96px) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(148px, 0.95fr);
+    grid-template-areas:
+      'rail instrument'
+      'notation notation';
+  }
+
+  #main-content .wrapper.is-playing .stage-practice-group {
+    display: contents;
+  }
+
+  #main-content .wrapper.is-playing .stage-instrument {
+    grid-area: instrument;
     container-type: size;
   }
 
+  #main-content .wrapper.is-playing .stage-notation {
+    grid-area: notation;
+    width: 100%;
+  }
+
+  #main-content .wrapper.is-playing .exercise-rail--status {
+    grid-area: rail;
+  }
+
   #main-content .wrapper.is-playing .stage-instrument.is-vertical-instrument {
-    flex: 0 0 50%;
+    flex: none;
     min-height: 0;
-    max-height: 50%;
-    --playing-instrument-max-w: min(100%, 50cqw);
-    --playing-instrument-max-h: min(100%, 50cqh);
+    max-height: none;
+    height: 100%;
+    --playing-instrument-max-w: min(100%, 100%);
+    --playing-instrument-max-h: min(100%, 38vh, 420px);
     --playing-instrument-max-height: var(--playing-instrument-max-h);
   }
 
@@ -633,7 +658,7 @@ body.dark-theme {
     color: #ffffff !important;
   }
 
-  .stage-practice,
+  .stage-practice-group,
   .stage-instrument,
   .stage-notation,
   .exercise-rail--status,
@@ -651,10 +676,16 @@ body.dark-theme {
   }
 
   //OVERRIDE: Metronome (1,2,3,4), Semaphore (REST/LISTEN/PLAY), Score Note Name
-  .metronome-bullet, 
+  .metronome-bullet {
+    background: var(--app-surface) !important;
+    animation: none !important;
+    background-size: unset !important;
+  }
+
+  .metronome-bullet,
   .metronome-bullet h1,
   #metronome-label,
-  semaphore-light, 
+  semaphore-light,
   semaphore-light *,
   .score,
   score-view,
