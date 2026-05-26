@@ -30,7 +30,7 @@
   }
 
   .light-label {
-    color: black;
+    color: inherit;
     margin-left: clamp(6px, 1.2vw, 10px);
     text-transform: uppercase;
     font-size: clamp(0.85rem, 1.4vw, 1rem);

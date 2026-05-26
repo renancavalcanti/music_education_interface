@@ -6,16 +6,29 @@
  * See the LICENSE file for more details.
  */
 
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, IonTabs, MenuController, PickerController } from '@ionic/angular';
 import { TabsService } from 'src/app/services/tabs.service';
-import { Router } from "@angular/router";
+import { NavigationEnd, Router } from '@angular/router';
+import { filter, Subscription } from 'rxjs';
 import { range } from 'lodash';
-import { MAXREFFREQUENCY, MINREFFREQUENCY } from 'src/app/constants';
+import {
+  APP_BRAND_ICON,
+  APP_BRAND_ICON_SRCSET_MOBILE,
+  APP_BRAND_ICON_SRCSET_NAV,
+  MAXREFFREQUENCY,
+  MINREFFREQUENCY,
+} from 'src/app/constants';
 import { PitchService } from 'src/app/services/pitch.service';
 import { RefFreqService } from 'src/app/services/ref-freq.service';
 import { SoundsService } from 'src/app/services/sounds.service';
+import { addIcons } from 'ionicons';
+import { close, musicalNote, musicalNotes, optionsOutline, pulseOutline, settingsOutline, textOutline, volumeHighOutline, moonOutline, eyeOutline, languageOutline } from 'ionicons/icons';
+
+type ExerciseMode = 'instrument' | 'tuner';
+const INSTRUMENT_OPTIONS = ['trumpet', 'clarinet', 'oboe'] as const;
+
 @Component({
   selector: 'app-tabs',
   templateUrl: './tabs.page.html',
@@ -26,23 +39,21 @@ import { SoundsService } from 'src/app/services/sounds.service';
 /**
  * TabsComponent class represents the tab navigation interface of the music education application.
  */
-export class TabsComponent implements OnInit {
+export class TabsComponent implements OnInit, OnDestroy {
+  private routerSub?: Subscription;
+  exerciseMode: ExerciseMode = 'instrument';
   selectedInstrument = 'trumpet';
-  mode = 'trumpet';
   useFlatsAndSharps = false;
   useDynamics = false;
   isDarkMode = false;
   language = 'en';
   refFrequencyValue$ = 440;
+  readonly brandIcon = APP_BRAND_ICON;
+  readonly brandIconSrcSetMobile = APP_BRAND_ICON_SRCSET_MOBILE;
+  readonly brandIconSrcSetNav = APP_BRAND_ICON_SRCSET_NAV;
   instrumentSelectInterfaceOptions = { cssClass: 'settings-select-overlay' };
   nomenclatureSelectInterfaceOptions = { cssClass: 'settings-select-overlay' };
 
-  /**
-   * Creates an instance of TabsComponent.
-   * @param tabsService - The service for managing tab states.
-   * @param router - The router for navigation.
-   * @param menu - The menu controller for managing side menus.
-   */
   constructor(
     private tabsService: TabsService,
     private router: Router,
@@ -55,45 +66,90 @@ export class TabsComponent implements OnInit {
   @ViewChild('tabs', { static: false }) tabs: IonTabs | undefined;
 
   ngOnInit(): void {
+    addIcons({ close, musicalNote, musicalNotes, optionsOutline, pulseOutline, settingsOutline, textOutline, volumeHighOutline, moonOutline, eyeOutline, languageOutline });
     this.refFrequencyService.getRefFrequency().subscribe(value => {
       this.refFrequencyValue$ = value;
     });
     this.loadStateFromLocalStorage();
+    this.ensureExerciseRoute();
+    this.routerSub = this.router.events
+      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+      .subscribe(() => this.ensureExerciseRoute());
   }
 
-  /**
-   * Checks if the tabs are disabled.
-   * @returns {boolean} True if the tabs are disabled, otherwise false.
-   */
+  ngOnDestroy(): void {
+    this.routerSub?.unsubscribe();
+  }
+
+  private ensureExerciseRoute(): void {
+    if (!this.router.url.includes('/home/exercise')) {
+      void this.router.navigate(['/home', 'exercise'], { replaceUrl: true });
+    }
+    void this.syncIonTabsSelection();
+  }
+
+  private async syncIonTabsSelection(): Promise<void> {
+    try {
+      await this.tabs?.select('exercise');
+    } catch {
+      // Tab may already be selected or tabs not ready yet.
+    }
+  }
+
   isDisabled(): boolean {
     return this.tabsService.getDisabled();
   }
 
-  /**
-   * Handles tab change events.
-   * @param event - The event object containing information about the tab change.
-   * @returns void
-   */
-  onChange(event: any) {
-    console.log(event);
+  isInstrumentSelectDisabled(): boolean {
+    return this.exerciseMode === 'tuner';
+  }
+
+  onTabsChange(event: { detail?: { tab?: string }; tab?: string }) {
+    const tabId = event.detail?.tab ?? event.tab;
+    if (tabId === 'exercise' && !this.router.url.includes('/home/exercise')) {
+      void this.router.navigate(['/home', 'exercise']);
+    }
+  }
+
+  async closeMenu() {
+    await this.menu.close('settingsMenu');
   }
 
   private loadStateFromLocalStorage() {
-    const savedInstrument = localStorage.getItem('selectedInstrument');
-    const savedMode = localStorage.getItem('mode');
-    const savedLanguage = localStorage.getItem('language');
-
-    if (savedInstrument) {
-      this.selectedInstrument = savedInstrument;
-      this.soundsService.setInstrument(this.selectedInstrument);
-    }
-
-    this.mode = savedMode ?? this.selectedInstrument;
+    const { mode, instrument } = this.parseStoredModeAndInstrument();
+    this.exerciseMode = mode;
+    this.selectedInstrument = instrument;
+    this.applyExerciseModeToSounds();
     this.useFlatsAndSharps = this.retrieveAndParseFromLocalStorage('useFlatsAndSharps', false);
     this.useDynamics = this.retrieveAndParseFromLocalStorage('useDynamics', false);
     this.isDarkMode = this.retrieveAndParseFromLocalStorage('isDarkMode', false);
-    this.language = savedLanguage ?? 'en';
+    this.language = localStorage.getItem('language') ?? 'en';
     this.applyDarkMode(this.isDarkMode);
+  }
+
+  private parseStoredModeAndInstrument(): { mode: ExerciseMode; instrument: string } {
+    const savedMode = localStorage.getItem('mode');
+    const savedInstrument = localStorage.getItem('selectedInstrument');
+
+    let mode: ExerciseMode = 'instrument';
+    let instrument = 'trumpet';
+
+    if (savedInstrument && savedInstrument !== 'tuner' && INSTRUMENT_OPTIONS.includes(savedInstrument as typeof INSTRUMENT_OPTIONS[number])) {
+      instrument = savedInstrument;
+    }
+
+    if (savedMode === 'tuner') {
+      mode = 'tuner';
+    } else if (savedMode === 'instrument') {
+      mode = 'instrument';
+    } else if (savedInstrument === 'tuner') {
+      mode = 'tuner';
+    } else if (savedMode && INSTRUMENT_OPTIONS.includes(savedMode as typeof INSTRUMENT_OPTIONS[number])) {
+      mode = 'instrument';
+      instrument = savedMode;
+    }
+
+    return { mode, instrument };
   }
 
   private retrieveAndParseFromLocalStorage(key: string, defaultValue: any): any {
@@ -106,12 +162,16 @@ export class TabsComponent implements OnInit {
   }
 
   private saveStateToLocalStorage() {
+    localStorage.setItem('mode', this.exerciseMode);
     localStorage.setItem('selectedInstrument', this.selectedInstrument);
-    localStorage.setItem('mode', this.mode);
     localStorage.setItem('useFlatsAndSharps', JSON.stringify(this.useFlatsAndSharps));
     localStorage.setItem('useDynamics', JSON.stringify(this.useDynamics));
     localStorage.setItem('isDarkMode', JSON.stringify(this.isDarkMode));
     localStorage.setItem('language', this.language);
+  }
+
+  private applyExerciseModeToSounds() {
+    this.soundsService.setInstrument(this.exerciseMode === 'tuner' ? 'tuner' : this.selectedInstrument);
   }
 
   applyDarkMode(isDark: boolean) {
@@ -122,40 +182,61 @@ export class TabsComponent implements OnInit {
     }
   }
 
-  selectInstrument(event: any) {
-    this.selectedInstrument = event.detail.value;
-    this.mode = this.selectedInstrument;
-    this.soundsService.setInstrument(this.selectedInstrument);
+  async switchMode(event: CustomEvent) {
+    const mode = event.detail.value as ExerciseMode;
+    if (mode !== 'instrument' && mode !== 'tuner') {
+      return;
+    }
+
+    this.exerciseMode = mode;
+    this.applyExerciseModeToSounds();
+
+    if (mode === 'tuner') {
+      await this.prepareTunerMedia();
+    } else {
+      await this.prepareExerciseMedia();
+    }
+
     this.saveStateToLocalStorage();
     this.emitSettingsUpdated();
   }
 
-  switchMode(event: any) {
-    this.mode = event.detail.value;
+  selectInstrument(event: CustomEvent) {
+    if (this.isInstrumentSelectDisabled()) {
+      return;
+    }
+
+    const value = event.detail.value;
+    if (!INSTRUMENT_OPTIONS.includes(value)) {
+      return;
+    }
+
+    this.selectedInstrument = value;
+    this.applyExerciseModeToSounds();
     this.saveStateToLocalStorage();
     this.emitSettingsUpdated();
   }
 
-  switchUseFlatsAndSharps(event: any) {
+  switchUseFlatsAndSharps(event: CustomEvent) {
     this.useFlatsAndSharps = event.detail.checked;
     this.saveStateToLocalStorage();
     this.emitSettingsUpdated();
   }
 
-  switchUseDynamics(event: any) {
+  switchUseDynamics(event: CustomEvent) {
     this.useDynamics = event.detail.checked;
     this.saveStateToLocalStorage();
     this.emitSettingsUpdated();
   }
 
-  switchDarkMode(event: any) {
+  switchDarkMode(event: CustomEvent) {
     this.isDarkMode = event.detail.checked;
     this.applyDarkMode(this.isDarkMode);
     this.saveStateToLocalStorage();
     this.emitSettingsUpdated();
   }
 
-  changeLanguage(event: any) {
+  changeLanguage(event: CustomEvent) {
     this.language = event.detail.value;
     this.saveStateToLocalStorage();
     this.emitSettingsUpdated();
@@ -228,18 +309,6 @@ export class TabsComponent implements OnInit {
     await picker.present();
   }
 
-  /**
-   * Navigates to the user profile page.
-   * @returns void
-   */
-  goToProfile() {
-    this.router.navigate(['/profile']);
-  }
-
-  /**
-   * Opens or closes the settings menu.
-   * @returns {Promise<void>} A promise that resolves when the menu is opened or closed.
-   */
   async openMenu() {
     if (await this.menu.isOpen('settingsMenu')) {
       await this.menu.close('settingsMenu');

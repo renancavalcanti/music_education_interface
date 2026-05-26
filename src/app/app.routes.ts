@@ -46,10 +46,11 @@ export const routes: Routes = [
         path: 'exercise',
         loadComponent: () => import('./pages/home/home.page').then(m => m.HomePage), // Loads the HomePage for the exercise route
       },
-      {
-        path: 'tuner',
-        loadComponent: () => import('./pages/pitchlite/pitchlite.page').then(m => m.PitchComponent), // Loads the PitchComponent for the tuner route
-      },
+      // Standalone tuner route disabled for now; tuner is an exercise mode in Options.
+      // {
+      //   path: 'tuner',
+      //   loadComponent: () => import('./pages/pitchlite/pitchlite.page').then(m => m.PitchComponent),
+      // },
       {
         path: '',
         redirectTo: 'exercise', // Redirects to the exercise route by default
