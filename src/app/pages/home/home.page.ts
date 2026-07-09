@@ -212,8 +212,6 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
       return CLARINET_NOTES; // Use clarinet notes
     } else if (instrument === 'oboe') {
       return OBOE_NOTES;
-    } else if (instrument === 'tuner') {
-      return TRUMPET_NOTES;
     }
     return [];
   }
@@ -813,15 +811,15 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /**
-   * Storage/score/note-selector key for the active exercise (tuner uses its own note range).
+   * Storage/score/note-selector key for the selected instrument.
    */
   get exerciseNoteKey(): string {
-    return this.isTunerExercise() ? 'tuner' : this.selectedInstrument;
+    return this.selectedInstrument;
   }
 
   private applyExerciseConfiguration(): void {
     this.NOTES = this.getNotesForInstrument(this.exerciseNoteKey);
-    this.soundsService.setInstrument(this.isTunerExercise() ? 'tuner' : this.selectedInstrument);
+    this.soundsService.setInstrument(this.selectedInstrument);
     this.loadInstrumentSettings();
 
     if (!this._tempo.playing$.value) {
