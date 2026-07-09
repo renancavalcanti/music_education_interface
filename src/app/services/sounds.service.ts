@@ -100,7 +100,7 @@ export class SoundsService {
         this.loadingSubject.next(true);
         let notesToLoad;
 
-        if (instrument === 'trumpet' || instrument === 'tuner') {
+        if (instrument === 'trumpet') {
             notesToLoad = TRUMPET_NOTES;
         } else if (instrument === 'clarinet') {
             notesToLoad = CLARINET_NOTES;
@@ -123,8 +123,7 @@ export class SoundsService {
             // scramble the index-to-note mapping used during playback.
             const loadedNotes = await Promise.all(
                 notesToLoad.map(async (noteVariants) => {
-                    const soundInstrument = instrument === 'tuner' ? 'trumpet' : instrument;
-                    const filePath = await this.resolveAudioPath(soundInstrument, noteVariants);
+                    const filePath = await this.resolveAudioPath(instrument, noteVariants);
                     return this.createLoadedHowl(filePath);
                 })
             );

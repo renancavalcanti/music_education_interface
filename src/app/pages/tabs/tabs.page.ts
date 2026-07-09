@@ -171,7 +171,7 @@ export class TabsComponent implements OnInit, OnDestroy {
   }
 
   private applyExerciseModeToSounds() {
-    this.soundsService.setInstrument(this.exerciseMode === 'tuner' ? 'tuner' : this.selectedInstrument);
+    this.soundsService.setInstrument(this.selectedInstrument);
   }
 
   applyDarkMode(isDark: boolean) {
